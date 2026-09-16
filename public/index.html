@@ -2,58 +2,84 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CloudPlay | Mini GeForce NOW</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudPlay | Cloud Gaming Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="login-screen" class="screen">
-    <div class="card login-box">
-      <h2>CloudPlay Platform</h2>
-      <p>Log in with standard student credentials</p>
-      <input type="text" id="email" value="student@cloudplay.local" />
-      <input type="password" id="password" value="cloudplay123" />
-      <button onclick="login()">Enter Dashboard</button>
+
+  <div id="login-screen">
+    <div class="login-box">
+      <div class="logo">
+        <div class="logo-icon">&#9654;</div>
+        <h2>CloudPlay</h2>
+        <p class="subtitle">Cloud gaming with dynamic resource allocation</p>
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" value="student@cloudplay.local" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" value="cloudplay123" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" id="login-btn" onclick="login()">Sign In</button>
     </div>
   </div>
 
-  <div id="dashboard-screen" class="screen hidden">
+  <div id="dashboard-screen" class="hidden">
     <header>
-      <h1>CloudPlay Control Plane</h1>
-      <button class="logout-btn" onclick="logout()">Disconnect</button>
+      <h1><span>Cloud</span>Play Control Plane</h1>
+      <button class="btn-ghost" onclick="logout()">Disconnect</button>
     </header>
 
-    <div class="grid">
-      <section class="card">
-        <h3>Launch Virtual Workload</h3>
-        <div class="launch-buttons">
-          <button onclick="startSession('demo-arena')">Demo Arena (2 vCPU, 4GB)</button>
-          <button onclick="startSession('valorant-lab')">Valorant Lab (4 vCPU, 8GB, 1 GPU)</button>
-          <button onclick="startSession('racing-lab')">Racing Lab (6 vCPU, 16GB, 2 GPU)</button>
-        </div>
-      </section>
+    <div class="dashboard-content">
+      <div class="grid">
+        <section class="card">
+          <h3>Launch Workload</h3>
+          <div id="launcher-container" class="launch-buttons">
+            <div class="loading-overlay"><span class="spinner"></span> Loading games...</div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Edge Nodes</h3>
+          <div id="nodes-container" class="nodes-grid">
+            <div class="loading-overlay"><span class="spinner"></span> Loading nodes...</div>
+          </div>
+        </section>
+      </div>
 
       <section class="card">
-        <h3>Edge Node Cluster Allocations</h3>
-        <div id="nodes-container"></div>
+        <h3>Active Sessions</h3>
+        <div id="sessions-container" class="sessions-list">
+          <div class="loading-overlay"><span class="spinner"></span> Loading sessions...</div>
+        </div>
       </section>
     </div>
 
-    <section class="card session-card">
-      <h3>Active Gaming Sessions</h3>
-      <div id="sessions-container"></div>
-    </section>
-
-    <!-- Canvas In-Browser Virtual Workspace -->
     <section id="stream-container" class="card hidden">
       <div class="stream-header">
-        <span id="active-game-title">Cloud Instance Stream</span>
-        <button onclick="closeStream()">Exit Remote Stream</button>
+        <h3 id="active-game-title">Cloud Instance Stream</h3>
+        <button class="btn-ghost" onclick="closeStream()">Exit Stream</button>
       </div>
       <div class="viewport-wrapper">
-        <canvas id="gameCanvas" width="640" height="360"></canvas>
+        <canvas id="gameCanvas" class="hidden"></canvas>
+        <div id="game-frame-host" class="frame-host hidden">
+          <iframe id="game-frame" title="Game stream" allow="autoplay; fullscreen; clipboard-write"></iframe>
+        </div>
+        <div class="stream-overlay">
+          <span class="stream-badge">Live</span>
+          <span class="stream-badge latency" id="latency-badge">~12ms</span>
+        </div>
       </div>
     </section>
   </div>
+
+  <div id="toast-container" class="toast-container"></div>
 
   <script src="app.js"></script>
 </body>

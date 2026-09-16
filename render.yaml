@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: cloudplay
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: MONGO_URI
+        sync: false
