@@ -1,0 +1,35 @@
+:root {
+  --bg-color: #0d1117;
+  --card-bg: #161b22;
+  --accent: #238636;
+  --text: #f0f6fc;
+  --border: #30363d;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text);
+}
+
+.hidden { display: none !important; }
+.card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; margin-bottom: 1rem; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem; }
+header { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); }
+
+input, button { padding: 10px; margin: 5px 0; border-radius: 4px; border: 1px solid var(--border); }
+input { background: #010409; color: white; }
+button { background: var(--accent); color: white; cursor: pointer; border: none; font-weight: bold; }
+button:hover { opacity: 0.9; }
+
+.login-box { width: 320px; margin: 100px auto; display: flex; flex-direction: column; }
+.launch-buttons button { display: block; width: 100%; margin-bottom: 8px; }
+
+.node-box, .session-item { border: 1px solid var(--border); padding: 8px; border-radius: 4px; margin-bottom: 8px; }
+.progress-bar { height: 6px; background: #30363d; border-radius: 3px; overflow: hidden; margin: 4px 0 8px; }
+.progress-fill { height: 100%; background: #2ea043; }
+
+.viewport-wrapper { display: flex; justify-content: center; background: black; padding: 10px; border-radius: 4px; }
+canvas { border: 1px solid var(--border); background: #050505; }
+.stream-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }

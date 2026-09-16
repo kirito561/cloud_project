@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CloudPlay | Mini GeForce NOW</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="login-screen" class="screen">
+    <div class="card login-box">
+      <h2>CloudPlay Platform</h2>
+      <p>Log in with standard student credentials</p>
+      <input type="text" id="email" value="student@cloudplay.local" />
+      <input type="password" id="password" value="cloudplay123" />
+      <button onclick="login()">Enter Dashboard</button>
+    </div>
+  </div>
+
+  <div id="dashboard-screen" class="screen hidden">
+    <header>
+      <h1>CloudPlay Control Plane</h1>
+      <button class="logout-btn" onclick="logout()">Disconnect</button>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h3>Launch Virtual Workload</h3>
+        <div class="launch-buttons">
+          <button onclick="startSession('demo-arena')">Demo Arena (2 vCPU, 4GB)</button>
+          <button onclick="startSession('valorant-lab')">Valorant Lab (4 vCPU, 8GB, 1 GPU)</button>
+          <button onclick="startSession('racing-lab')">Racing Lab (6 vCPU, 16GB, 2 GPU)</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Edge Node Cluster Allocations</h3>
+        <div id="nodes-container"></div>
+      </section>
+    </div>
+
+    <section class="card session-card">
+      <h3>Active Gaming Sessions</h3>
+      <div id="sessions-container"></div>
+    </section>
+
+    <!-- Canvas In-Browser Virtual Workspace -->
+    <section id="stream-container" class="card hidden">
+      <div class="stream-header">
+        <span id="active-game-title">Cloud Instance Stream</span>
+        <button onclick="closeStream()">Exit Remote Stream</button>
+      </div>
+      <div class="viewport-wrapper">
+        <canvas id="gameCanvas" width="640" height="360"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
