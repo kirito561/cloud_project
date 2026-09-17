@@ -3,68 +3,117 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CloudPlay | Cloud Gaming Platform</title>
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="description" content="CloudPlay control pane — brutalist cloud gaming terminal.">
+  <title>CLOUDPLAY :: CONTROL PANE</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="overlay-scan" aria-hidden="true"></div>
 
+  <!-- AUTH GATE -->
   <div id="login-screen">
-    <div class="login-box">
-      <div class="logo">
-        <div class="logo-icon">&#9654;</div>
-        <h2>CloudPlay</h2>
-        <p class="subtitle">Cloud gaming with dynamic resource allocation</p>
+    <div class="term-window auth-window">
+      <div class="term-titlebar">
+        <span>+---[ CLOUDPLAY :: ACCESS GATE ]-------------------+</span>
       </div>
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" value="student@cloudplay.local" autocomplete="email">
+      <div class="term-body">
+        <pre class="ascii-logo" aria-hidden="true">  ____   _        ___    _   _   ____    ____    _        ___   _     _
+ / ___| | |      / _ \  | | | | |  _ \  |  _ \  | |      / _ \  \_   _/
+| |     | |     | | | | | | | | | | | | | |_) | | |     |  __/   \_\ /
+| |___  | |___  | |_| | | |_| | | |_| | |  __/  | |___  | |       | |
+ \____| |_____|  \___/   \___/  |____/  |_|     |_____| |_|       |_|</pre>
+
+        <p class="terminal-tagline">
+          <span id="typewriter"></span><span class="cursor"><span class="block">&#9608;</span></span>
+        </p>
+
+        <div class="form-group">
+          <label class="field-label" for="email">#&gt; LOGIN_CREDENTIALS</label>
+          <div class="prompt-field">
+            <span class="prompt-prefix" aria-hidden="true">guest@cloudplay:~$</span>
+            <input type="email" id="email" value="student@cloudplay.local" autocomplete="email" spellcheck="false" autofocus>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label" for="password">#&gt; PASSWORD</label>
+          <div class="prompt-field">
+            <span class="prompt-prefix" aria-hidden="true">guest@cloudplay:~$</span>
+            <input type="password" id="password" value="cloudplay123" autocomplete="current-password" spellcheck="false">
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="login-btn" type="button" onclick="login()">SIGN IN</button>
+        <p class="auth-hint">$ hint :: seed account student@cloudplay.local</p>
       </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" value="cloudplay123" autocomplete="current-password">
-      </div>
-      <button class="btn-primary" id="login-btn" onclick="login()">Sign In</button>
     </div>
   </div>
 
+  <!-- CONTROL PANE -->
   <div id="dashboard-screen" class="hidden">
-    <header>
-      <h1><span>Cloud</span>Play Control Plane</h1>
-      <button class="btn-ghost" onclick="logout()">Disconnect</button>
+    <header class="sysbar">
+      <div class="sysbar-left">
+        <span class="sysbar-title">CLOUDPLAY<span class="cursor"><span class="block">&#9608;</span></span></span>
+        <span class="sysbar-sep">|</span>
+        <span class="sysbar-user">$ whoami :: <span id="whoami-user">student@cloudplay.local</span></span>
+        <span class="sysbar-sep hidden-mobile">|</span>
+        <span class="sysbar-env hidden-mobile">CTRL-PANE v3.0</span>
+      </div>
+      <div class="sysbar-right">
+        <span class="sysbar-time" id="sysbar-time">--:--:--</span>
+        <button class="btn btn-ghost" type="button" onclick="logout()">DISCONNECT</button>
+      </div>
     </header>
 
     <div class="dashboard-content">
       <div class="grid">
         <section class="card">
-          <h3>Launch Workload</h3>
-          <div id="launcher-container" class="launch-buttons">
-            <div class="loading-overlay"><span class="spinner"></span> Loading games...</div>
+          <div class="card-titlebar">
+            <span class="ct">LAUNCH WORKLOAD</span>
+            <span class="ct-side" id="launcher-count">--</span>
+          </div>
+          <div class="card-body">
+            <div id="launcher-container">
+              <div class="loading-overlay"><span class="cursor"><span class="block">&#9608;</span></span> loading program table...</div>
+            </div>
           </div>
         </section>
 
         <section class="card">
-          <h3>Edge Nodes</h3>
-          <div id="nodes-container" class="nodes-grid">
-            <div class="loading-overlay"><span class="spinner"></span> Loading nodes...</div>
+          <div class="card-titlebar">
+            <span class="ct">EDGE NODES</span>
+            <span class="ct-side">FLOTILLA</span>
+          </div>
+          <div class="card-body">
+            <div id="nodes-container" class="nodes-grid">
+              <div class="loading-overlay"><span class="cursor"><span class="block">&#9608;</span></span> polling node fleet...</div>
+            </div>
           </div>
         </section>
       </div>
 
       <section class="card">
-        <h3>Active Sessions</h3>
-        <div id="sessions-container" class="sessions-list">
-          <div class="loading-overlay"><span class="spinner"></span> Loading sessions...</div>
+        <div class="card-titlebar">
+          <span class="ct">ACTIVE SESSIONS</span>
+          <span class="ct-side" id="session-count">0 RUNNING</span>
+        </div>
+        <div class="card-body">
+          <div id="sessions-container" class="sessions-list">
+            <div class="loading-overlay"><span class="cursor"><span class="block">&#9608;</span></span> fetching session table...</div>
+          </div>
         </div>
       </section>
     </div>
 
-    <section id="stream-container" class="card hidden">
-      <div class="stream-header">
-        <h3 id="active-game-title">Cloud Instance Stream</h3>
-        <button class="btn-ghost" onclick="closeStream()">Exit Stream</button>
+    <!-- STREAM VIEWPORT -->
+    <section id="stream-container" class="card stream-pane hidden">
+      <div class="card-titlebar stream-titlebar">
+        <span class="ct" id="active-game-title">REMOTE STREAM :: NONE</span>
+        <button class="btn btn-ghost" type="button" onclick="closeStream()">EXIT</button>
       </div>
       <div class="viewport-wrapper">
         <canvas id="gameCanvas" class="hidden"></canvas>
@@ -72,14 +121,18 @@
           <iframe id="game-frame" title="Game stream" allow="autoplay; fullscreen; clipboard-write"></iframe>
         </div>
         <div class="stream-overlay">
-          <span class="stream-badge">Live</span>
+          <span class="stream-badge live">&#9679; LIVE</span>
           <span class="stream-badge latency" id="latency-badge">~12ms</span>
         </div>
+      </div>
+      <div class="viewport-footer">
+        <span class="vf-left">[ END OF STREAM ]</span>
+        <span class="vf-right">$ esc OR [ EXIT ] TO DETACH</span>
       </div>
     </section>
   </div>
 
-  <div id="toast-container" class="toast-container"></div>
+  <div id="toast-container" class="toast-container" role="status" aria-live="polite"></div>
 
   <script src="app.js"></script>
 </body>

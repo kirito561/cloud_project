@@ -9,20 +9,33 @@
   let PROFILES = {};
   let currentProfileKey = null;
 
+  // ── Game Icons (low-fi stroke glyphs) ────────
+  const GAME_ICONS = {
+    'valorant-lab': '<svg class="game-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" shape-rendering="crispEdges" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>',
+    'racing-lab': '<svg class="game-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" shape-rendering="crispEdges" aria-hidden="true"><path d="M3.34 19a10 10 0 1 1 17.32 0"/><path d="M12 14l4-4"/><path d="M12 5V2M5 12H2M19 12h3"/></svg>',
+    'open-2048': '<svg class="game-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" shape-rendering="crispEdges" aria-hidden="true"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>',
+    'open-dino': '<svg class="game-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" shape-rendering="crispEdges" aria-hidden="true"><path d="M13 2v6M13 8h5v3a1 1 0 0 1-1 1h-4z"/><path d="M16 12v4M14 16v5M13 8V6M16 12h1.5"/></svg>',
+    'open-hextris': '<svg class="game-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" shape-rendering="crispEdges" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M12 3v5M12 16v5M3.5 8.5l4.3 2.5M16.2 13l4.3 2.5"/></svg>'
+  };
+
+  function gameIcon(key) {
+    return GAME_ICONS[key] || '<svg class="game-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" shape-rendering="crispEdges" aria-hidden="true"><path d="M5 12h14M12 5v14M5 12l7-7M19 12l-7 7"/></svg>';
+  }
+
   // ── Toast System ─────────────────────────────
   function toast(message, type = 'info', duration = 4000) {
     const container = document.getElementById('toast-container');
     const el = document.createElement('div');
     el.className = `toast ${type}`;
-    const icons = { success: '\u2713', error: '\u2717', info: '\u2139' };
+    const tags = { success: '[OK]', error: '[ERR]', info: '[HINT]' };
     el.innerHTML = `
-      <span class="toast-icon">${icons[type] || icons.info}</span>
+      <span class="toast-tag">${tags[type] || tags.info}</span>
       <span class="toast-msg">${escapeHtml(message)}</span>
       <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
     `;
     container.appendChild(el);
     setTimeout(() => {
-      el.style.animation = 'slideOutRight 0.3s ease-in forwards';
+      el.style.animation = 'toast-out 0.3s steps(4, end) forwards';
       el.addEventListener('animationend', () => el.remove());
     }, duration);
   }
@@ -88,6 +101,10 @@
         PROFILES = data.profiles || {};
         renderLauncher(PROFILES);
       }
+      const countEl = document.getElementById('launcher-count');
+      if (countEl) countEl.textContent = `${String(Object.keys(PROFILES).length).padStart(2, '0')} PROGRAMS`;
+      const sessEl = document.getElementById('session-count');
+      if (sessEl) sessEl.textContent = `${data.sessions.length} RUNNING`;
       renderNodes(data.nodes);
       renderSessions(data.sessions);
     } catch {
@@ -105,32 +122,39 @@
 
   function renderNodes(nodes) {
     const container = document.getElementById('nodes-container');
-    container.innerHTML = nodes.map(node => `
-      <div class="node-card">
-        <div class="node-header">
-          <div>
-            <div class="node-id">${escapeHtml(node.id)}</div>
-            <div class="node-region">${escapeHtml(node.region)}</div>
+    container.innerHTML = nodes.map(node => {
+      const ok = !node.status || node.status === 'ready';
+      const label = ok ? 'OK' : 'ERR';
+      return `
+        <div class="node-card">
+          <div class="node-header">
+            <div>
+              <div class="node-id">${escapeHtml(node.id)}</div>
+              <div class="node-region">@ ${escapeHtml(node.region || '')}</div>
+            </div>
+            <span class="status-tag ${ok ? 'ok' : 'err'}">${label}</span>
           </div>
-          <span class="status-badge">${node.status}</span>
+          ${renderMeterRow('CPU', node.used.cpu, node.capacity.cpu)}
+          ${renderMeterRow('RAM', node.used.ram, node.capacity.ram)}
+          ${renderMeterRow('GPU', node.used.gpu, node.capacity.gpu)}
         </div>
-        ${renderResourceRow('CPU', node.used.cpu, node.capacity.cpu)}
-        ${renderResourceRow('RAM', node.used.ram, node.capacity.ram)}
-        ${renderResourceRow('GPU', node.used.gpu, node.capacity.gpu)}
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
-  function renderResourceRow(label, used, total) {
-    const pct = total ? Math.round((used / total) * 100) : 0;
+  function asciiMeter(used, total, width = 16) {
+    const pct = total ? Math.max(0, Math.min(1, used / total)) : 0;
+    const filled = Math.round(pct * width);
+    return `[${'|'.repeat(filled)}${'.'.repeat(width - filled)}]`;
+  }
+
+  function renderMeterRow(label, used, total) {
     const level = resourceLevel(used, total);
     return `
-      <div class="resource-row">
-        <span class="resource-label">${label}</span>
-        <div class="progress-bar">
-          <div class="progress-fill ${level}" style="width: ${pct}%"></div>
-        </div>
-        <span class="resource-value">${used} / ${total}</span>
+      <div class="meter">
+        <span class="meter-tag">${label}</span>
+        <span class="meter-bar ${level}">${asciiMeter(used, total)}</span>
+        <span class="meter-val">${used} / ${total}</span>
       </div>
     `;
   }
@@ -138,18 +162,20 @@
   function renderSessions(sessions) {
     const container = document.getElementById('sessions-container');
     if (!sessions.length) {
-      container.innerHTML = '<div class="empty-state">No active sessions. Launch a workload above to get started.</div>';
+      container.innerHTML = '<div class="empty-state">no active sessions :: launch a workload above</div>';
       return;
     }
     container.innerHTML = sessions.map(s => {
       const uptime = s.createdAt ? formatUptime(Date.now() - s.createdAt) : '--';
       const r = s.resources;
+      const statusTxt = s.status === 'running' ? 'RUN' : 'BOOT';
       return `
         <div class="session-card ${s.status}">
+          <span class="game-icon-wrap">${gameIcon(s.profileKey)}</span>
           <div class="session-info">
-            <span class="session-name">${escapeHtml(s.name)}</span>
-            <span class="session-meta">${escapeHtml(s.id)} &middot; ${escapeHtml(s.nodeId)} &middot; ${uptime}</span>
-            <span class="session-meta">${r.cpu} vCPU &middot; ${r.ram} GB &middot; ${r.gpu} GPU</span>
+            <div class="session-name">${escapeHtml(s.name)}</div>
+            <div class="session-meta">${escapeHtml(s.id)} @ ${escapeHtml(s.nodeId)} &middot; ${uptime}</div>
+            <div class="session-meta">${r.cpu} vCPU &middot; ${r.ram} GB &middot; ${r.gpu} GPU</div>
             ${s.status === 'running' ? `
               <div class="resource-stepper">
                 <div class="stepper-item">
@@ -170,15 +196,17 @@
                   <span class="stepper-value">${r.gpu}</span>
                   <button class="stepper-btn" onclick="window._adjustResource('${s.id}','gpu',1,${r.cpu},${r.ram},${r.gpu})">+</button>
                 </div>
-                <span class="stepper-hint">Reclaim a resource down to 0 to auto-terminate</span>
+                <span class="stepper-hint">reclaim a resource down to 0 to auto-terminate</span>
               </div>` : ''}
           </div>
-          <span class="session-status ${s.status}">${s.status}</span>
-          <div class="session-actions">
-            ${s.status === 'running'
-              ? `<button class="btn-accent" onclick="window._launchStream('${s.profileKey}', '${escapeHtml(s.name)}')">Stream</button>`
-              : ''}
-            <button class="btn-danger" onclick="window._terminate('${s.id}')">Terminate</button>
+          <div class="session-right">
+            <span class="session-status ${s.status}">${statusTxt}</span>
+            <div class="session-actions">
+              ${s.status === 'running'
+                ? `<button class="btn-accent" onclick="window._launchStream('${s.profileKey}', '${escapeHtml(s.name)}')">ATTACH</button>`
+                : ''}
+              <button class="btn-danger" onclick="window._terminate('${s.id}')">KILL</button>
+            </div>
           </div>
         </div>
       `;
@@ -235,17 +263,23 @@
       ? `
         <div class="launcher-group">
           <div class="launcher-group-title">${title}</div>
+          <div class="launch-buttons">
           ${group.map(([key, p]) => `
-            <div class="launch-btn" onclick="window._startSession('${key}')">
-              <div>
+            <div class="launch-btn" onclick="window._startSession('${key}')" role="button" tabindex="0">
+              <span class="game-icon-wrap">${gameIcon(key)}</span>
+              <div class="launch-main">
                 <div class="game-name">${escapeHtml(p.name)}</div>
-                <div class="game-specs">${specsText(p)}</div>
                 ${p.description ? `<div class="game-desc">${escapeHtml(p.description)}</div>` : ''}
-                ${p.license ? `<div class="game-license">${escapeHtml(p.author || '')} &middot; ${escapeHtml(p.license)}</div>` : ''}
+                <div class="game-meta">
+                  ${specsText(p)}
+                  ${p.license ? `<span class="meta-chip">${escapeHtml(p.license)}</span>` : ''}
+                  ${p.author ? `<span class="meta-chip">@${escapeHtml(p.author)}</span>` : ''}
+                </div>
               </div>
-              <span class="game-arrow">&rsaquo;</span>
+              <span class="launch-cmd">LAUNCH</span>
             </div>
           `).join('')}
+          </div>
         </div>`
       : '';
 
@@ -255,7 +289,7 @@
   function specsText(p) {
     const parts = [`${p.cpu} vCPU`, `${p.ram} GB RAM`];
     if (p.gpu > 0) parts.push(`${p.gpu} GPU`);
-    return parts.join(' &middot; ');
+    return parts.map(x => `<span class="meta-chip">${x}</span>`).join('');
   }
 
   // ── Session Management ───────────────────────
@@ -302,7 +336,7 @@
 
     const container = document.getElementById('stream-container');
     container.classList.remove('hidden');
-    document.getElementById('active-game-title').textContent = `Remote View: ${name}`;
+    document.getElementById('active-game-title').textContent = `REMOTE STREAM :: ${name.toUpperCase()}`;
     container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
     if (profile && profile.category === 'web' && profile.source) {
@@ -654,4 +688,33 @@ keyHandlers = null;
   document.getElementById('email').addEventListener('keydown', e => {
     if (e.key === 'Enter') window.login();
   });
+
+  // ── Sysbar clock ─────────────────────────────
+  function initClock() {
+    const el = document.getElementById('sysbar-time');
+    if (!el) return;
+    const render = () => {
+      const d = new Date();
+      const p = n => String(n).padStart(2, '0');
+      el.textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    };
+    render();
+    setInterval(render, 1000);
+  }
+
+  // ── Typewriter tagline ───────────────────────
+  const TYPE_TEXT = 'cloudplay v3.0 :: auth console online :: awaiting operator';
+  function startTypewriter() {
+    const el = document.getElementById('typewriter');
+    if (!el) return;
+    let i = 0;
+    const tick = () => {
+      el.textContent = TYPE_TEXT.slice(0, i++);
+      if (i <= TYPE_TEXT.length) setTimeout(tick, 22);
+    };
+    setTimeout(tick, 400);
+  }
+
+  startTypewriter();
+  initClock();
 })();
