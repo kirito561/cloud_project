@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#0a0a0a"/>
+  <g fill="#0a0a0a" stroke="#123b12" stroke-width="1">
+    <rect x="0" y="0" width="40" height="40"/><rect x="40" y="0" width="40" height="40"/><rect x="80" y="0" width="40" height="40"/><rect x="120" y="0" width="40" height="40"/>
+    <rect x="0" y="40" width="40" height="40"/><rect x="40" y="40" width="40" height="40"/><rect x="80" y="40" width="40" height="40"/><rect x="120" y="40" width="40" height="40"/>
+  </g>
+  <circle cx="520" cy="70" r="30" fill="#ffb000"/>
+  <path d="M0 230h640" stroke="#1f521f" stroke-width="2"/>
+  <g fill="#33ff00">
+    <path d="M420 140h8v90h-8zM448 140h8v90h-8zM404 196c-8-6-16-16-16-28 0-14 12-24 26-24 12 0 22 8 22 20 0 10-8 16-16 20 10 2 18 8 18 18 0 12-10 20-24 20s-24-8-24-20c0-6 4-10 9-12z"/>
+    <rect x="480" y="150" width="26" height="70"/>
+    <path d="M480 214l26-26 0 26z" fill="#ffb000"/>
+  </g>
+  <g font-family="monospace" font-size="21" font-weight="bold" fill="#33ff00" letter-spacing="5">
+    <text x="22" y="338">CHROME DINO RUN</text>
+  </g>
+  <g font-family="monospace" font-size="14" fill="#1f521f" letter-spacing="3">
+    <text x="470" y="42">[WEB-PORT]</text>
+    <text x="470" y="64">BSD-3</text>
+  </g>
+</svg>

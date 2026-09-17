@@ -708,6 +708,68 @@ canvas {
   to { opacity: 0; transform: translateX(24px); }
 }
 
+/* ── Game covers ─────────────────────────────── */
+.launch-btn { position: relative; overflow: hidden; }
+.launch-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  left: -45%;
+  width: 30%;
+  background: linear-gradient(105deg, transparent, rgba(51, 255, 0, 0.10), transparent);
+  transform: skewX(-18deg);
+  pointer-events: none;
+}
+.launch-btn:hover::after { animation: cover-sweep 0.5s steps(12, end); }
+@keyframes cover-sweep { from { left: -45%; } to { left: 140%; } }
+
+.cover-wrap {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+  line-height: 0;
+  border: 1px solid var(--faint);
+  background: #060b06;
+  transition: border-color var(--step);
+}
+.launch-btn:hover .cover-wrap { border-color: var(--fg); }
+
+.game-cover { width: 116px; height: 66px; object-fit: cover; display: block; }
+.cover-fallback { width: 66px; height: 38px; display: block; background: repeating-linear-gradient(45deg, #0a0a0a 0 8px, #0d110d 8px 16px); }
+.cover-fallback-lg { width: 116px; height: 66px; }
+
+.cover-wrap .game-icon-wrap {
+  position: absolute;
+  right: 3px; bottom: 3px;
+  padding: 2px;
+  line-height: 0;
+  background: rgba(10, 10, 10, 0.85);
+  border: 1px solid var(--muted);
+}
+.cover-wrap .game-icon-wrap .game-icon { width: 16px; height: 16px; display: block; color: var(--fg); }
+
+.cover-wrap-sm { width: 66px; height: 38px; }
+.cover-wrap-sm .game-icon-wrap { right: 2px; bottom: 2px; padding: 1px; }
+.cover-wrap-sm .game-icon-wrap .game-icon { width: 13px; height: 13px; }
+
+.game-meta .meta-chip.gpu-chip { border-color: var(--amber); color: var(--amber); text-shadow: var(--glow-amber); }
+
+/* ── Session GPU meter ───────────────────────── */
+.session-gpu { display: flex; align-items: center; gap: 0.45rem; margin-top: 0.4rem; }
+.session-gpu .sg-tag { color: var(--amber); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.08em; font-style: normal; }
+.sg-bar { font-size: 0.66rem; font-weight: 700; letter-spacing: 0; }
+.sg-bar.low { color: var(--fg); text-shadow: var(--glow); }
+.sg-bar.mid { color: var(--amber); text-shadow: var(--glow-amber); }
+.sg-bar.high { color: var(--red); text-shadow: var(--glow-red); animation: slow-blink 1s steps(1) infinite; }
+.sg-val { font-size: 0.62rem; color: var(--dim); min-width: 2.5rem; }
+.sg-note { font-size: 0.54rem; color: var(--faint); letter-spacing: 0.08em; }
+.sg-note::before { content: ':: '; color: var(--muted); }
+
+/* ── Stream GPU / FPS badges ─────────────────── */
+.stream-badge.gpu { color: var(--amber); border-color: var(--amber); text-shadow: var(--glow-amber); }
+.stream-badge.fps { color: var(--dim); border-color: var(--muted); }
+.stream-badge.blink { animation: slow-blink 1.2s steps(1) infinite; }
+
 /* ── Responsive ──────────────────────────────── */
 @media (max-width: 860px) {
   .grid { grid-template-columns: 1fr; }
@@ -719,4 +781,135 @@ canvas {
   .ascii-logo { font-size: 0.58rem; }
   .session-card { flex-wrap: wrap; }
   .session-right { flex-direction: row; align-items: center; width: 100%; justify-content: space-between; }
+.game-cover, .cover-fallback-lg { width: 92px; height: 54px; }
+  .game-cover { object-fit: cover; }
+  .stream-collage { flex-wrap: nowrap; overflow-x: auto; }
+  .scroll-x { padding-bottom: 0.25rem; }
+  .stream-stats { display: none; }
 }
+/* ── Login cover wall ─────────────────────────── */
+.login-art {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  overflow: hidden;
+  opacity: 0.14;
+  filter: grayscale(55%) contrast(1.05);
+  pointer-events: none;
+}
+.login-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-right: 1px solid var(--faint);
+  border-bottom: 1px solid var(--faint);
+}
+
+/* ── Fullscreen stream ────────────────────────── */
+.stream-actions { display: flex; gap: 0.4rem; }
+
+.stream-pane.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  max-width: none;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+}
+.stream-pane.fullscreen .card-titlebar { flex-shrink: 0; border-width: 0 0 1px; }
+.stream-pane.fullscreen .viewport-wrapper {
+  flex: 1 1 auto;
+  aspect-ratio: auto;
+  max-height: none;
+  min-height: 0;
+  border-width: 0;
+  border-bottom: 1px solid var(--muted);
+}
+.stream-pane.fullscreen .viewport-footer { flex-shrink: 0; border-width: 0; }
+.stream-pane.fullscreen .stream-collage { flex-shrink: 0; border-bottom: 1px solid var(--muted); }
+
+/* ── In-stream collage / switcher ─────────────── */
+.stream-collage {
+  display: flex;
+  gap: 0.55rem;
+  padding: 0.6rem 0.75rem;
+  overflow-x: auto;
+  background: #060b06;
+  border: 1px solid var(--muted);
+  border-top: none;
+}
+.sc-tile {
+  position: relative;
+  flex: 0 0 132px;
+  cursor: pointer;
+  border: 1px solid var(--faint);
+  background: #000;
+  line-height: 0;
+  transition: border-color var(--step), transform var(--step);
+}
+.sc-tile:hover { border-color: var(--fg); transform: translateY(-2px); }
+.sc-tile.active { border-color: var(--fg); box-shadow: inset 0 0 0 1px var(--fg); }
+.sc-tile.run { border-color: var(--muted); }
+.sc-tile.run:hover { border-color: var(--fg); }
+.sc-cover { width: 100%; height: 74px; object-fit: cover; display: block; }
+.sc-tag {
+  position: absolute;
+  top: 4px; left: 4px;
+  padding: 1px 5px;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  border: 1px solid var(--muted);
+  background: rgba(10, 10, 10, 0.85);
+}
+.sc-tag.run { color: var(--fg); border-color: var(--fg); text-shadow: var(--glow); }
+.sc-name {
+  position: absolute;
+  right: 4px; bottom: 4px;
+  left: 4px;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--fg);
+  text-shadow: 0 1px 0 #000, 0 0 6px rgba(51, 255, 0, 0.5);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  line-height: 1.3;
+}
+
+/* ── Session cover ────────────────────────────── */
+.session-cover { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ── Stream status readout (titlebar, off the game screen) ── */
+.stream-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-right: 0.25rem;
+}
+.stream-stats .stat {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.stream-stats .stat-live { color: var(--muted); }
+.stream-stats .stat-live.on {
+  color: var(--red);
+  text-shadow: var(--glow-red);
+  animation: slow-blink 1.4s steps(1) infinite;
+}
+.stream-stats .stat-gpu { color: var(--amber); text-shadow: var(--glow-amber); }

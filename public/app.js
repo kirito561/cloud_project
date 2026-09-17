@@ -7,7 +7,9 @@
   let keyHandlers = null;
   let resizeHandler = null;
   let PROFILES = {};
+  let SESSIONS = [];
   let currentProfileKey = null;
+  let isFullscreen = false;
 
   // ── Game Icons (low-fi stroke glyphs) ────────
   const GAME_ICONS = {
@@ -15,7 +17,9 @@
     'racing-lab': '<svg class="game-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" shape-rendering="crispEdges" aria-hidden="true"><path d="M3.34 19a10 10 0 1 1 17.32 0"/><path d="M12 14l4-4"/><path d="M12 5V2M5 12H2M19 12h3"/></svg>',
     'open-2048': '<svg class="game-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" shape-rendering="crispEdges" aria-hidden="true"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>',
     'open-dino': '<svg class="game-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" shape-rendering="crispEdges" aria-hidden="true"><path d="M13 2v6M13 8h5v3a1 1 0 0 1-1 1h-4z"/><path d="M16 12v4M14 16v5M13 8V6M16 12h1.5"/></svg>',
-    'open-hextris': '<svg class="game-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" shape-rendering="crispEdges" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M12 3v5M12 16v5M3.5 8.5l4.3 2.5M16.2 13l4.3 2.5"/></svg>'
+    'open-hextris': '<svg class="game-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" shape-rendering="crispEdges" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M12 3v5M12 16v5M3.5 8.5l4.3 2.5M16.2 13l4.3 2.5"/></svg>',
+    'astro-sweep': '<svg class="game-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" shape-rendering="crispEdges" aria-hidden="true"><path d="M12 2l2.5 10L12 22l-2.5-10z"/><path d="M12 6l1.5 6L12 18l-1.5-6z"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="17" r="2.5"/></svg>',
+    'fx-burst': '<svg class="game-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" shape-rendering="crispEdges" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5M5 5l3.5 3.5M15.5 15.5 19 19M19 5l-3.5 3.5M8.5 15.5 5 19"/></svg>'
   };
 
   function gameIcon(key) {
@@ -107,6 +111,8 @@
       if (sessEl) sessEl.textContent = `${data.sessions.length} RUNNING`;
       renderNodes(data.nodes);
       renderSessions(data.sessions);
+      SESSIONS = data.sessions || [];
+      renderStreamCollage();
     } catch {
       toast('Failed to fetch dashboard state', 'error');
     }
@@ -122,6 +128,10 @@
 
   function renderNodes(nodes) {
     const container = document.getElementById('nodes-container');
+    const gpuUsed = nodes.reduce((a, n) => a + n.used.gpu, 0);
+    const gpuCap = nodes.reduce((a, n) => a + n.capacity.gpu, 0);
+    const meta = document.getElementById('node-meta');
+    if (meta) meta.textContent = `FLOTILLA :: GPU ${gpuUsed}/${gpuCap}`;
     container.innerHTML = nodes.map(node => {
       const ok = !node.status || node.status === 'ready';
       const label = ok ? 'OK' : 'ERR';
@@ -159,6 +169,26 @@
     `;
   }
 
+  function sessionGpuLoad(s) {
+    const gpu = (s.resources && s.resources.gpu) || 0;
+    if (s.status !== 'running' || gpu === 0) return null;
+    const profile = PROFILES[s.profileKey];
+    const heavy = !!(profile && (profile.gpuHeavy || profile.gpu >= 2));
+    const seed = (s.id && s.id.split('')[2] ? s.id.split('')[2].charCodeAt(0) : 7) + s.id.length * 13 + gpu * 4;
+    const wave = (Math.sin(Date.now() / 900 + seed) + 1) * 0.5;
+    const base = heavy ? 62 : gpu >= 2 ? 42 : 26;
+    return Math.round(Math.min(98, base + wave * 30));
+  }
+
+  function gpuLevelClass(load) {
+    return load >= 70 ? 'high' : load >= 40 ? 'mid' : 'low';
+  }
+
+  function gpuBar(load, width = 8) {
+    const filled = Math.round((Math.min(100, load) / 100) * width);
+    return `[${'|'.repeat(filled)}${'.'.repeat(width - filled)}]`;
+  }
+
   function renderSessions(sessions) {
     const container = document.getElementById('sessions-container');
     if (!sessions.length) {
@@ -169,13 +199,28 @@
       const uptime = s.createdAt ? formatUptime(Date.now() - s.createdAt) : '--';
       const r = s.resources;
       const statusTxt = s.status === 'running' ? 'RUN' : 'BOOT';
+      const profile = PROFILES[s.profileKey];
+      const gpuLoad = sessionGpuLoad(s);
+      const coverHtml = profile && profile.cover
+        ? `<img class="session-cover" src="${escapeHtml(profile.cover)}" alt="" onerror="this.style.display='none'">`
+        : '<span class="cover-fallback"></span>';
       return `
         <div class="session-card ${s.status}">
-          <span class="game-icon-wrap">${gameIcon(s.profileKey)}</span>
+          <span class="cover-wrap cover-wrap-sm">
+            ${coverHtml}
+            <span class="game-icon-wrap" aria-hidden="true">${gameIcon(s.profileKey)}</span>
+          </span>
           <div class="session-info">
             <div class="session-name">${escapeHtml(s.name)}</div>
             <div class="session-meta">${escapeHtml(s.id)} @ ${escapeHtml(s.nodeId)} &middot; ${uptime}</div>
             <div class="session-meta">${r.cpu} vCPU &middot; ${r.ram} GB &middot; ${r.gpu} GPU</div>
+            ${s.status === 'running' && gpuLoad !== null ? `
+              <div class="session-gpu">
+                <span class="sg-tag">GPU</span>
+                <span class="sg-bar ${gpuLevelClass(gpuLoad)}">${gpuBar(gpuLoad)}</span>
+                <span class="sg-val">${gpuLoad}%</span>
+                <span class="sg-note">${gpuLoad >= 70 ? 'PEAK' : gpuLoad >= 40 ? 'LOAD' : 'IDLE'}</span>
+              </div>` : ''}
             ${s.status === 'running' ? `
               <div class="resource-stepper">
                 <div class="stepper-item">
@@ -266,12 +311,18 @@
           <div class="launch-buttons">
           ${group.map(([key, p]) => `
             <div class="launch-btn" onclick="window._startSession('${key}')" role="button" tabindex="0">
-              <span class="game-icon-wrap">${gameIcon(key)}</span>
+              <span class="cover-wrap">
+                ${p.cover
+                  ? `<img class="game-cover" src="${escapeHtml(p.cover)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+                  : '<span class="cover-fallback cover-fallback-lg"></span>'}
+                <span class="game-icon-wrap" aria-hidden="true">${gameIcon(key)}</span>
+              </span>
               <div class="launch-main">
                 <div class="game-name">${escapeHtml(p.name)}</div>
                 ${p.description ? `<div class="game-desc">${escapeHtml(p.description)}</div>` : ''}
                 <div class="game-meta">
                   ${specsText(p)}
+                  ${p.gpuHeavy ? `<span class="meta-chip gpu-chip">GPU-HEAVY</span>` : ''}
                   ${p.license ? `<span class="meta-chip">${escapeHtml(p.license)}</span>` : ''}
                   ${p.author ? `<span class="meta-chip">@${escapeHtml(p.author)}</span>` : ''}
                 </div>
@@ -347,11 +398,13 @@
 
     currentSession = name;
     startLatencySim();
+    startTelemetry(profile);
+    renderStreamCollage();
   };
 
   function startLatencySim() {
     stopLatencySim();
-    const latEl = document.getElementById('latency-badge');
+    const latEl = document.getElementById('stat-latency');
     if (!latEl) return;
     latencyTimer = setInterval(() => {
       latEl.textContent = `~${8 + Math.floor(Math.random() * 8)}ms`;
@@ -360,7 +413,150 @@
 
   function stopLatencySim() {
     if (latencyTimer) { clearInterval(latencyTimer); latencyTimer = null; }
+    const latEl = document.getElementById('stat-latency');
+    if (latEl) latEl.textContent = '~--ms';
   }
+
+  // ── GPU / FPS telemetry overlay ──────────────
+  let telemetryTimer = null;
+  let measuredFps = 0;
+
+  function startTelemetry(profile) {
+    stopTelemetry();
+    const gpuEl = document.getElementById('stat-gpu');
+    const fpsEl = document.getElementById('stat-fps');
+    const liveEl = document.getElementById('stat-live');
+    if (liveEl) liveEl.classList.add('on');
+    if (!gpuEl || !fpsEl) return;
+    const gpuCount = (profile && profile.gpu) || 0;
+    const heavy = !!(profile && (profile.gpuHeavy || profile.gpu >= 2));
+    telemetryTimer = setInterval(() => {
+      const wave = (Math.sin(Date.now() / 900) + 1) * 0.5;
+      const gpuPct = gpuCount === 0 ? 2 + Math.floor(wave * 6) : heavy ? Math.round(58 + wave * 40) : Math.round(22 + wave * 32);
+      gpuEl.textContent = `GPU ${gpuPct}%`;
+      const simFps = 54 + Math.floor(Math.random() * 7) - (gpuPct > 90 ? 8 : 0);
+      fpsEl.textContent = `${Math.max(24, Math.min(60, Math.round(measuredFps || simFps)))} FPS`;
+    }, 1100);
+  }
+
+  function stopTelemetry() {
+    if (telemetryTimer) { clearInterval(telemetryTimer); telemetryTimer = null; }
+    measuredFps = 0;
+    const gpuEl = document.getElementById('stat-gpu');
+    const fpsEl = document.getElementById('stat-fps');
+    const liveEl = document.getElementById('stat-live');
+    if (gpuEl) gpuEl.textContent = 'GPU --%';
+    if (fpsEl) fpsEl.textContent = '-- FPS';
+    if (liveEl) liveEl.classList.remove('on');
+  }
+
+  // ── Fullscreen game screen ───────────────────
+  window.toggleFullscreen = function () {
+    const pane = document.getElementById('stream-container');
+    if (!pane) return;
+    if (isFullscreen) {
+      pane.classList.remove('fullscreen');
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      isFullscreen = false;
+      updateFullscreenBtn();
+    } else {
+      pane.classList.add('fullscreen');
+      if (pane.requestFullscreen) pane.requestFullscreen().catch(() => {});
+      isFullscreen = true;
+      updateFullscreenBtn();
+    }
+    if (resizeHandler) resizeHandler();
+    window.dispatchEvent(new Event('resize'));
+  };
+
+  function updateFullscreenBtn() {
+    const b = document.getElementById('fullscreen-btn');
+    if (b) b.textContent = isFullscreen ? 'EXIT FULLSCREEN [ - ]' : 'FULLSCREEN [ + ]';
+  }
+
+  function exitFullscreenState() {
+    const pane = document.getElementById('stream-container');
+    if (pane) pane.classList.remove('fullscreen');
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    isFullscreen = false;
+    updateFullscreenBtn();
+  }
+
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && isFullscreen) {
+      const pane = document.getElementById('stream-container');
+      if (pane) pane.classList.remove('fullscreen');
+      isFullscreen = false;
+      updateFullscreenBtn();
+      window.dispatchEvent(new Event('resize'));
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (isFullscreen) {
+      exitFullscreenState();
+      if (resizeHandler) resizeHandler();
+      window.dispatchEvent(new Event('resize'));
+      return;
+    }
+    if (currentSession) closeStream();
+  });
+
+  // ── In-stream cover collage / game switcher ──
+  function renderStreamCollage() {
+    const strip = document.getElementById('stream-collage');
+    if (!strip) return;
+    const running = new Set(
+      (SESSIONS || []).filter(s => s.status === 'running').map(s => s.profileKey)
+    );
+    const active = currentProfileKey;
+    strip.innerHTML = Object.entries(PROFILES || {}).map(([key, p]) => `
+      <div class="sc-tile ${running.has(key) ? 'run' : ''} ${key === active ? 'active' : ''}"
+           onclick="window._collageLaunch('${key}')" role="button" tabindex="0" title="${escapeHtml(p.name)}">
+        <img class="sc-cover" src="${escapeHtml(p.cover || '')}" alt="" loading="lazy" onerror="this.style.display='none'">
+        <span class="sc-tag ${running.has(key) ? 'run' : ''}">${running.has(key) ? 'RUN' : 'IDLE'}</span>
+        <span class="sc-name">${escapeHtml(p.name)}</span>
+      </div>
+    `).join('');
+  }
+  window._renderStreamCollage = renderStreamCollage;
+
+  window._collageLaunch = async function (profileKey) {
+    const p = PROFILES[profileKey];
+    if (!p) return;
+    if (profileKey === currentProfileKey) return;
+    const existing = (SESSIONS || []).find(s => s.profileKey === profileKey && s.status === 'running');
+    if (existing) {
+      _launchStream(profileKey, existing.name);
+      return;
+    }
+    toast(`provisioning ${p.name} on the fleet...`, 'info');
+    try {
+      const res = await fetch('/api/sessions/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileKey })
+      });
+      const data = await res.json();
+      if (!res.ok) { toast(data.error || 'Failed to create session', 'error'); return; }
+      const id = data.id;
+      const t0 = Date.now();
+      const poll = setInterval(async () => {
+        await refreshDashboard();
+        const s = (SESSIONS || []).find(x => x.id === id);
+        if (s && s.status === 'running') {
+          clearInterval(poll);
+          _launchStream(profileKey, s.name);
+        } else if (Date.now() - t0 > 8000) {
+          clearInterval(poll);
+          toast('provision timed out — try again', 'error');
+        }
+      }, 900);
+    } catch {
+      toast('Network error provisioning session', 'error');
+    }
+  };
 
   // ── External (iframe) stream ────────────────
   function launchExternalStream(source, name) {
@@ -418,6 +614,7 @@
 
     canvas.onclick = () => {
       if (profileKey === 'valorant-lab') handleClickTarget(state, canvas);
+      else if (profileKey === 'fx-burst') state.poke = Date.now();
     };
 
     if (profileKey === 'valorant-lab') {
@@ -436,14 +633,48 @@
       state.distance = 0;
       state.score = 0;
       state.roadOffset = 0;
+    } else if (profileKey === 'astro-sweep') {
+      state.ship = { x: canvas.width / 2, y: canvas.height - 64 };
+      state.bullets = [];
+      state.rocks = [];
+      state.score = 0;
+      state.lives = 3;
+      state.coolDown = 0;
+      state.mouse = { x: 0, y: 0 };
+    } else if (profileKey === 'fx-burst') {
+      state.particles = [];
+      for (let i = 0; i < 4200; i++) {
+        state.particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          vx: (Math.random() - 0.5) * 1.6,
+          vy: (Math.random() - 0.5) * 1.6,
+          r: 0.6 + Math.random() * 1.8,
+          k: Math.random()
+        });
+      }
+      state.mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+      state.poke = 0;
     }
+
+    state.__fpsT = performance.now();
+    state.__fpsF = 0;
 
     function render() {
       const w = canvas.width, h = canvas.height;
       ctx.clearRect(0, 0, w, h);
+      state.__fpsF++;
+      const now = performance.now();
+      if (now - state.__fpsT >= 500) {
+        measuredFps = Math.round((state.__fpsF * 1000) / (now - state.__fpsT));
+        state.__fpsT = now;
+        state.__fpsF = 0;
+      }
 
       if (profileKey === 'valorant-lab') renderValorantLab(ctx, state, w, h);
       else if (profileKey === 'racing-lab') renderRacingLab(ctx, state, w, h);
+      else if (profileKey === 'astro-sweep') renderAstroSweep(ctx, state, w, h);
+      else if (profileKey === 'fx-burst') renderFxBurst(ctx, state, w, h);
 
       gameLoopId = requestAnimationFrame(render);
     }
@@ -469,6 +700,8 @@ keyHandlers = null;
     keepStreamHidden();
     closeCanvasStream();
     stopLatencySim();
+    stopTelemetry();
+    exitFullscreenState();
 
     const frame = document.getElementById('game-frame');
     if (frame) {
@@ -679,6 +912,143 @@ keyHandlers = null;
       s.speed = 3;
       s.distance = Math.max(0, s.distance - 50);
     }
+  }
+
+  // ── Astro Sweep Renderer ─────────────────────
+  function renderAstroSweep(ctx, s, w, h) {
+    // Starfield (scrolling)
+    for (let i = 0; i < 40; i++) {
+      const sx = (i * 97 + Math.sin(Date.now() / 1800 + i) * 15) % w;
+      const sy = (i * 53 + Date.now() * 0.04) % (h - 30);
+      ctx.fillStyle = i % 5 === 0 ? '#ffb000' : '#1f521f';
+      ctx.fillRect(sx, sy, i % 5 === 0 ? 3 : 2, i % 5 === 0 ? 3 : 2);
+    }
+
+    // Ship movement
+    if (s.keys['ArrowLeft'] || s.keys['a']) s.ship.x -= 6;
+    if (s.keys['ArrowRight'] || s.keys['d']) s.ship.x += 6;
+    if (s.keys['ArrowUp'] || s.keys['w']) s.ship.y -= 4;
+    if (s.keys['ArrowDown'] || s.keys['s']) s.ship.y += 4;
+    s.ship.x = Math.max(22, Math.min(w - 22, s.ship.x));
+    s.ship.y = Math.max(120, Math.min(h - 40, s.ship.y));
+
+    // Shooting
+    s.coolDown--;
+    if (s.coolDown <= 0 && s.keys[' ']) {
+      s.bullets.push({ x: s.ship.x, y: s.ship.y - 22, vy: -10 });
+      s.coolDown = 8;
+    }
+
+    // Bullets
+    s.bullets = s.bullets.filter(b => {
+      b.y += b.vy;
+      if (b.y < 0) return false;
+      let hit = false;
+      s.rocks.forEach(r => {
+        if (!r.dead && Math.abs(b.x - r.x) < r.r && Math.abs(b.y - r.y) < r.r) { r.dead = true; s.score++; hit = true; }
+      });
+      ctx.fillStyle = '#33ff00';
+      ctx.shadowColor = '#33ff00';
+      ctx.shadowBlur = 8;
+      ctx.fillRect(b.x - 1, b.y - 8, 2, 12);
+      ctx.shadowBlur = 0;
+      return !hit;
+    });
+
+    // Spawn rocks
+    if (Math.random() < 0.012 + s.score * 0.0001) {
+      s.rocks.push({
+        x: 30 + Math.random() * (w - 60), y: -30,
+        r: 12 + Math.random() * 18,
+        vx: (Math.random() - 0.5) * 2.4, vy: 1.8 + Math.random() * 2.2
+      });
+    }
+
+    // Rocks
+    s.rocks = s.rocks.filter(r => {
+      if (r.dead) return false;
+      r.x += r.vx; r.y += r.vy;
+      if (r.y > h + 30 || r.x < -30 || r.x > w + 30) return false;
+      const dx = r.x - s.ship.x, dy = r.y - s.ship.y;
+      if (Math.sqrt(dx * dx + dy * dy) < r.r + 16) {
+        s.lives--;
+        s.rocks.forEach(o => { if (o !== r) o.dead = true; });
+        if (s.lives <= 0) { s.lives = 3; if (s.score) s.score = 0; }
+        return false;
+      }
+      ctx.strokeStyle = '#ffb000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(r.x - r.r, r.y); ctx.lineTo(r.x + r.r, r.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(r.x, r.y - r.r); ctx.lineTo(r.x, r.y + r.r); ctx.stroke();
+      return true;
+    });
+
+    // Ship
+    ctx.fillStyle = '#33ff00';
+    ctx.shadowColor = '#33ff00';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(s.ship.x, s.ship.y - 20);
+    ctx.lineTo(s.ship.x + 20, s.ship.y + 16);
+    ctx.lineTo(s.ship.x, s.ship.y + 7);
+    ctx.lineTo(s.ship.x - 20, s.ship.y + 16);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#ffb000';
+    ctx.fillRect(s.ship.x - 3, s.ship.y + 4, 6, 10);
+    ctx.shadowBlur = 0;
+
+    // HUD
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(10, h - 36, 360, 26);
+    ctx.fillStyle = '#33ff00';
+    ctx.font = '12px "JetBrains Mono", monospace';
+    ctx.fillText(`SCORE ${s.score}  |  LIVES ${s.lives}  |  [SPACE] FIRE  [WASD/ARROWS] MOVE`, 18, h - 18);
+  }
+
+  // ── GPU Furnace (fx-burst) Renderer ──────────
+  function renderFxBurst(ctx, s, w, h) {
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(0, 0, w, h);
+
+    const mx = s.mouse.x, my = s.mouse.y;
+    const poked = s.poke && (Date.now() - s.poke) < 700;
+
+    s.particles.forEach(p => {
+      if (poked) {
+        const dx = p.x - mx, dy = p.y - my;
+        const d = Math.sqrt(dx * dx + dy * dy) + 0.01;
+        const f = 2600 / (d * d);
+        p.vx += (dx / d) * f;
+        p.vy += (dy / d) * f;
+      }
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0 || p.x > w) p.vx *= -1;
+      if (p.y < 0 || p.y > h) p.vy *= -1;
+      ctx.fillStyle = p.k > 0.9 ? '#ffb000' : p.k > 0.45 ? '#33ff00' : '#1f521f';
+      ctx.fillRect(p.x, p.y, p.r, p.r);
+    });
+
+    // Pulse rings on click
+    if (poked) {
+      ctx.strokeStyle = 'rgba(255, 176, 0, 0.9)';
+      ctx.lineWidth = 2;
+      const ring = (Date.now() - s.poke) / 700;
+      ctx.beginPath();
+      ctx.arc(mx, my, 20 + ring * 120, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // HUD
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(10, h - 36, 380, 26);
+    ctx.fillStyle = '#ffb000';
+    ctx.font = '12px "JetBrains Mono", monospace';
+    ctx.fillText(`GPU FURNACE :: ${s.particles.length.toLocaleString()} PARTICLES :: [CLICK] SHOCKWAVE`, 18, h - 18);
   }
 
   // ── Handle Enter key on login ────────────────

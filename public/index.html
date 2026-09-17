@@ -16,6 +16,15 @@
 
   <!-- AUTH GATE -->
   <div id="login-screen">
+    <div id="login-art" class="login-art" aria-hidden="true">
+      <img src="/img/covers/racing-lab.svg" alt="">
+      <img src="/img/covers/astro-sweep.svg" alt="">
+      <img src="/img/covers/fx-burst.svg" alt="">
+      <img src="/img/covers/valorant-lab.svg" alt="">
+      <img src="/img/covers/open-hextris.svg" alt="">
+      <img src="/img/covers/open-dino.svg" alt="">
+      <img src="/img/covers/open-2048.svg" alt="">
+    </div>
     <div class="term-window auth-window">
       <div class="term-titlebar">
         <span>+---[ CLOUDPLAY :: ACCESS GATE ]-------------------+</span>
@@ -86,7 +95,7 @@
         <section class="card">
           <div class="card-titlebar">
             <span class="ct">EDGE NODES</span>
-            <span class="ct-side">FLOTILLA</span>
+            <span class="ct-side" id="node-meta">FLOTILLA :: GPU 0/6</span>
           </div>
           <div class="card-body">
             <div id="nodes-container" class="nodes-grid">
@@ -113,22 +122,28 @@
     <section id="stream-container" class="card stream-pane hidden">
       <div class="card-titlebar stream-titlebar">
         <span class="ct" id="active-game-title">REMOTE STREAM :: NONE</span>
-        <button class="btn btn-ghost" type="button" onclick="closeStream()">EXIT</button>
+        <div class="stream-actions">
+          <span class="stream-stats" aria-hidden="false">
+            <span class="stat stat-live" id="stat-live">&#9679; LIVE</span>
+            <span class="stat" id="stat-latency">~--ms</span>
+            <span class="stat stat-gpu" id="stat-gpu">GPU --%</span>
+            <span class="stat" id="stat-fps">-- FPS</span>
+          </span>
+          <button class="btn btn-ghost" id="fullscreen-btn" type="button" onclick="toggleFullscreen()">FULLSCREEN [&#11021;]</button>
+          <button class="btn btn-ghost" type="button" onclick="closeStream()">EXIT</button>
+        </div>
       </div>
       <div class="viewport-wrapper">
         <canvas id="gameCanvas" class="hidden"></canvas>
         <div id="game-frame-host" class="frame-host hidden">
           <iframe id="game-frame" title="Game stream" allow="autoplay; fullscreen; clipboard-write"></iframe>
         </div>
-        <div class="stream-overlay">
-          <span class="stream-badge live">&#9679; LIVE</span>
-          <span class="stream-badge latency" id="latency-badge">~12ms</span>
-        </div>
       </div>
       <div class="viewport-footer">
         <span class="vf-left">[ END OF STREAM ]</span>
         <span class="vf-right">$ esc OR [ EXIT ] TO DETACH</span>
       </div>
+      <div id="stream-collage" class="stream-collage"></div>
     </section>
   </div>
 

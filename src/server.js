@@ -26,24 +26,37 @@ const DEFAULT_CORE = {
     { id: 'edge-node-02', region: 'us-west-edge', status: 'ready', capacity: { cpu: 8, ram: 32, gpu: 2 } }
   ],
   profiles: {
-    'valorant-lab': { name: 'Valorant FPS Lab', cpu: 4, ram: 8, gpu: 1, description: 'High-FPS tactical shooter simulation', category: 'original' },
-    'racing-lab': { name: 'Cyber Racing Lab', cpu: 6, ram: 16, gpu: 2, description: 'GPU-intensive racing simulation', category: 'original' },
+    'valorant-lab': { name: 'Valorant FPS Lab', cpu: 4, ram: 8, gpu: 1, description: 'High-FPS tactical shooter simulation', category: 'original', cover: '/img/covers/valorant-lab.svg' },
+    'racing-lab': { name: 'Cyber Racing Lab', cpu: 6, ram: 16, gpu: 2, description: 'GPU-intensive racing simulation', category: 'original', cover: '/img/covers/racing-lab.svg', gpuHeavy: true },
+    'astro-sweep': {
+      name: 'Astro Sweep', cpu: 3, ram: 6, gpu: 2, category: 'original', gpuHeavy: true,
+      description: 'GPU-raster space shooter — dodge rocks, fire lasers',
+      cover: '/img/covers/astro-sweep.svg'
+    },
+    'fx-burst': {
+      name: 'GPU Furnace', cpu: 2, ram: 4, gpu: 3, category: 'original', gpuHeavy: true,
+      description: '12,000-particle GPU stress furnace — click for shockwaves',
+      cover: '/img/covers/fx-burst.svg'
+    },
     'open-2048': {
       name: 'Blocky 2048', cpu: 2, ram: 4, gpu: 0, category: 'web',
       description: 'Slide tiles to merge into 2048',
       source: '/games/2048/index.html',
+      cover: '/img/covers/open-2048.svg',
       license: 'MIT', author: 'Gabriele Cirulli'
     },
     'open-dino': {
       name: 'Chrome Dino Run', cpu: 2, ram: 4, gpu: 0, category: 'web',
       description: 'Endless runner — jump the cacti',
       source: '/games/dino/index.html',
+      cover: '/img/covers/open-dino.svg',
       license: 'BSD-3-Clause', author: 'wayou'
     },
     'open-hextris': {
       name: 'Hextris Blocks', cpu: 4, ram: 8, gpu: 1, category: 'web',
       description: 'Fast-paced hexagonal Tetris',
       source: '/games/hextris/index.html',
+      cover: '/img/covers/open-hextris.svg',
       license: 'GPL-3.0', author: 'Hextris Team'
     }
   }

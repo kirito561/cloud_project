@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#0a0a0a"/>
+  <g stroke="#123b12" stroke-width="1">
+    <path d="M0 0h640v360H0z"/>
+    <path d="M0 40h640M0 80h640M0 120h640M0 160h640M0 200h640M0 240h640M0 280h640M0 320h640"/>
+  </g>
+  <g fill="#0a0a0a" stroke="#1f521f" stroke-width="2">
+    <polygon points="320,60 560,330 80,330"/>
+  </g>
+  <g stroke="#1f521f" stroke-width="2" stroke-dasharray="16 22">
+    <path d="M320 80v250"/>
+    <path d="M190 240v90"/>
+    <path d="M450 240v90"/>
+  </g>
+  <g stroke="#ff3333" stroke-width="3">
+    <path d="M96 330L560 330"/>
+  </g>
+  <g stroke="#ffb000" stroke-width="2">
+    <path d="M150 330L530 330"/>
+    <path d="M170 330L510 330"/>
+  </g>
+  <g stroke="#33ff00" stroke-width="3" fill="#0a0a0a" shape-rendering="crispEdges">
+    <rect x="288" y="262" width="64" height="34" rx="0"/>
+    <path d="M302 268h20M302 288h20"/>
+  </g>
+  <g font-family="monospace" font-size="21" font-weight="bold" fill="#33ff00" letter-spacing="5">
+    <text x="22" y="338">CYBER RACING LAB</text>
+  </g>
+  <g font-family="monospace" font-size="14" fill="#ffb000" letter-spacing="3">
+    <text x="470" y="42">[GPU-TURBO]</text>
+    <text x="470" y="64">DRIFT=FPS</text>
+  </g>
+</svg>

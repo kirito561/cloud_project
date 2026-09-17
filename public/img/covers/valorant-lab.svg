@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#0a0a0a"/>
+  <g stroke="#123b12" stroke-width="1">
+    <path d="M40 0v360M80 0v360M120 0v360M160 0v360M200 0v360M240 0v360M280 0v360M360 0v360M400 0v360M440 0v360M480 0v360M520 0v360M560 0v360M600 0v360"/>
+    <path d="M0 40h640M0 80h640M0 120h640M0 160h640M0 200h640M0 240h640M0 280h640M0 320h640"/>
+  </g>
+  <g stroke="#1f521f" stroke-width="3"><path d="M318 0h4v360h-4zM0 178h640"/></g>
+  <g fill="none" stroke="#33ff00" stroke-width="3" shape-rendering="crispEdges">
+    <circle cx="320" cy="180" r="132"/>
+    <circle cx="320" cy="180" r="72"/>
+    <circle cx="320" cy="180" r="20"/>
+    <path d="M320 8v34M320 318v34M148 180h34M458 180h34"/>
+  </g>
+  <circle cx="320" cy="180" r="6" fill="#33ff00"/>
+  <g stroke="#ffb000" stroke-width="3">
+    <path d="M20 20h56M76 20v56"/>
+    <path d="M620 20h-56M564 20v56"/>
+    <path d="M20 340h56M20 284v56"/>
+    <path d="M620 340h-56M620 284v56"/>
+  </g>
+  <g font-family="monospace" font-size="21" font-weight="bold" fill="#33ff00" letter-spacing="5">
+    <text x="22" y="338">VALORANT // FPS LAB</text>
+  </g>
+  <g font-family="monospace" font-size="14" fill="#ffb000" letter-spacing="3">
+    <text x="470" y="42">[GPU-LOCK]</text>
+    <text x="470" y="64">144HZ</text>
+  </g>
+</svg>

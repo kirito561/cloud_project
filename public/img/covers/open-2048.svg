@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#0a0a0a"/>
+  <g stroke="#123b12" stroke-width="1">
+    <path d="M0 40h640M0 80h640M0 120h640M0 160h640M0 200h640M0 240h640M0 280h640M0 320h640"/>
+  </g>
+  <g fill="none" stroke="#1f521f" stroke-width="2">
+    <rect x="190" y="90" width="120" height="120"/>
+    <rect x="330" y="90" width="120" height="120"/>
+    <rect x="190" y="230" width="120" height="120"/>
+    <rect x="330" y="230" width="120" height="120"/>
+  </g>
+  <g font-family="monospace" font-weight="bold" text-anchor="middle">
+    <text x="250" y="158" font-size="34" fill="#33ff00" shape-rendering="crispEdges">2</text>
+    <text x="390" y="158" font-size="34" fill="#ffb000">4</text>
+    <text x="250" y="298" font-size="34" fill="#ffb000">8</text>
+    <text x="390" y="298" font-size="34" fill="#ff3333">16</text>
+  </g>
+  <g stroke="#33ff00" stroke-width="3"><path d="M190 90h120M190 210h120M330 90h120M330 210h120"/></g>
+  <g font-family="monospace" font-size="21" font-weight="bold" fill="#33ff00" letter-spacing="5">
+    <text x="22" y="338">BLOCKY 2048</text>
+  </g>
+  <g font-family="monospace" font-size="14" fill="#1f521f" letter-spacing="3">
+    <text x="470" y="42">[WEB-PORT]</text>
+    <text x="470" y="64">MIT LICENSE</text>
+  </g>
+</svg>

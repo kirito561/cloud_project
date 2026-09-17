@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#0a0a0a"/>
+  <g fill="#1f521f">
+    <rect x="60" y="40" width="3" height="3"/><rect x="140" y="90" width="3" height="3"/><rect x="90" y="180" width="3" height="3"/>
+    <rect x="220" y="50" width="3" height="3"/><rect x="560" y="60" width="3" height="3"/><rect x="500" y="130" width="3" height="3"/>
+    <rect x="180" y="220" width="3" height="3"/><rect x="400" y="40" width="3" height="3"/><rect x="520" y="240" width="3" height="3"/>
+  </g>
+  <g fill="none" stroke="#ff3333" stroke-width="3">
+    <circle cx="430" cy="120" r="46"/>
+    <path d="M430 74v12M430 178v12M384 120h12M464 120h12"/>
+  </g>
+  <g fill="#33ff00" shape-rendering="crispEdges">
+    <polygon points="180,300 250,300 250,344 180,344"/>
+    <polygon points="180,300 215,272 250,300"/>
+    <polygon points="250,344 215,372 180,344"/>
+  </g>
+  <g stroke="#ffb000" stroke-width="4" shape-rendering="crispEdges">
+    <path d="M300 330h60"/>
+  </g>
+  <g font-family="monospace" font-size="21" font-weight="bold" fill="#33ff00" letter-spacing="5">
+    <text x="22" y="338">ASTRO SWEEP</text>
+  </g>
+  <g font-family="monospace" font-size="14" fill="#ffb000" letter-spacing="3">
+    <text x="470" y="42">[GPU-RASTER]</text>
+    <text x="470" y="64">60FPS LOCK</text>
+  </g>
+</svg>

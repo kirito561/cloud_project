@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#0a0a0a"/>
+  <g stroke="#123b12" stroke-width="1">
+    <path d="M0 40h640M0 80h640M0 120h640M0 160h640M0 200h640M0 240h640M0 280h640M0 320h640"/>
+    <path d="M40 0v360M80 0v360M120 0v360M160 0v360M200 0v360M240 0v360M280 0v360M360 0v360M400 0v360M440 0v360M480 0v360M520 0v360M560 0v360M600 0v360"/>
+  </g>
+  <g fill="none">
+    <circle cx="320" cy="180" r="120" stroke="#1f521f" stroke-width="2"/>
+    <circle cx="320" cy="180" r="86" stroke="#1f521f" stroke-width="1"/>
+    <circle cx="320" cy="180" r="52" stroke="#1f521f" stroke-width="1"/>
+  </g>
+  <g stroke="#33ff00" stroke-width="2" shape-rendering="crispEdges">
+    <path d="M320 180L320 40M320 180L320 320M320 180L160 180M320 180L480 180"/>
+    <path d="M320 180L210 70M320 180L430 70M320 180L210 290M320 180L430 290"/>
+  </g>
+  <g fill="#33ff00" shape-rendering="crispEdges">
+    <rect x="316" y="40" width="8" height="24"/>
+    <rect x="316" y="296" width="8" height="24"/>
+    <rect x="160" y="176" width="24" height="8"/>
+    <rect x="456" y="176" width="24" height="8"/>
+  </g>
+  <g fill="#ffb000">
+    <rect x="320" y="120" width="4" height="4"/><rect x="360" y="260" width="3" height="3"/><rect x="250" y="100" width="3" height="3"/>
+  </g>
+  <g font-family="monospace" font-size="21" font-weight="bold" fill="#33ff00" letter-spacing="5">
+    <text x="22" y="338">GPU FURNACE</text>
+  </g>
+  <g font-family="monospace" font-size="14" fill="#ffb000" letter-spacing="3">
+    <text x="470" y="42">[GPU-STRESS]</text>
+    <text x="470" y="64">12K PARTICLES</text>
+  </g>
+</svg>

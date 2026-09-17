@@ -47,6 +47,19 @@ function createMongoStore({ url, defaultCore, dbName = 'cloudplay' }) {
           { _id: 'core', ...JSON.parse(JSON.stringify(defaultCore)) },
           { upsert: true }
         );
+      } else {
+        // Reconcile defaults onto an already-seeded doc so profile upgrades
+        // (new games, cover art, gpu flags) reach Mongo-backed deployments.
+        const defaults = JSON.parse(JSON.stringify(defaultCore));
+        const { _id, ...stored } = existing;
+        const profiles = { ...(stored.profiles || {}) };
+        for (const [key, def] of Object.entries(defaults.profiles || {})) {
+          profiles[key] = profiles[key]
+            ? { ...def, ...profiles[key] }
+            : def;
+        }
+        const reconciled = { ...stored, profiles };
+        await coreCol().replaceOne({ _id: 'core' }, { _id: 'core', ...reconciled }, { upsert: true });
       }
     },
 
