@@ -10,6 +10,17 @@ const { createStore } = require('./store');
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
+// Optional .env loader (KEY=VALUE lines) — never overrides real environment vars.
+try {
+  const envPath = path.join(__dirname, '..', '.env');
+  if (fs.existsSync(envPath)) {
+    fs.readFileSync(envPath, 'utf8').split(/\r?\n/).forEach(line => {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+      if (m && m[1] && process.env[m[1]] === undefined) process.env[m[1]] = m[2];
+    });
+  }
+} catch { /* ignore */ }
+
 function hashPassword(pw) {
   return crypto.createHash('sha256').update(pw).digest('hex');
 }
@@ -98,6 +109,51 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon'
 };
 
+// ── Google OAuth -------------------------------
+// Real OAuth flow when GOOGLE_CLIENT_ID/SECRET are set (Render env).
+// Without them the app runs in demo mode: the sign-in button provisions the
+// seed demo account directly so the prototype stays usable offline.
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const DEMO_EMAIL = 'student@cloudplay.local';
+const oauthStates = new Map();
+const authSessions = new Map();
+
+function issueSession(user, method) {
+  const token = crypto.randomBytes(24).toString('hex');
+  authSessions.set(token, {
+    email: user.email,
+    name: user.name || '',
+    picture: user.picture || '',
+    method: method || 'google',
+    createdAt: Date.now()
+  });
+  return token;
+}
+
+function readCookies(req) {
+  const header = req.headers.cookie || '';
+  const out = {};
+  header.split(';').forEach(pair => {
+    const idx = pair.indexOf('=');
+    if (idx > -1) out[pair.slice(0, idx).trim()] = decodeURIComponent(pair.slice(idx + 1).trim());
+  });
+  return out;
+}
+
+function setSessionCookie(res, token, secure) {
+  res.setHeader('Set-Cookie', `cp_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=28800${secure ? '; Secure' : ''}`);
+}
+
+function clearSessionCookie(res) {
+  res.setHeader('Set-Cookie', 'cp_session=; Path=/; HttpOnly; Max-Age=0');
+}
+
+function oauthRedirectBase(req) {
+  const proto = req.headers['x-forwarded-proto'] || (req.socket.encrypted ? 'https' : 'http');
+  return `${proto}://${req.headers.host}/api/auth/google/callback`;
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
 
@@ -108,6 +164,98 @@ const server = http.createServer(async (req, res) => {
       'Access-Control-Allow-Headers': 'Content-Type'
     });
     return res.end();
+  }
+
+  // ── Google OAuth endpoints ────────────────────
+  if (url.pathname === '/api/auth/config' && req.method === 'GET') {
+    return sendJSON(res, 200, { googleConfigured: Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) });
+  }
+
+  if (url.pathname === '/api/auth/google' && req.method === 'GET') {
+    const secure = (req.headers['x-forwarded-proto'] || 'http') === 'https';
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+      // Demo mode: no OAuth credentials — provision the seed account directly.
+      const token = issueSession({ email: DEMO_EMAIL, name: 'CloudPlay Demo' }, 'demo');
+      setSessionCookie(res, token, secure);
+      res.writeHead(302, { Location: '/?ok=1' });
+      return res.end();
+    }
+    const state = crypto.randomBytes(16).toString('hex');
+    oauthStates.set(state, Date.now());
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: oauthRedirectBase(req),
+      response_type: 'code',
+      scope: 'openid email profile',
+      state,
+      prompt: 'select_account'
+    });
+    res.writeHead(302, { Location: `https://accounts.google.com/o/oauth2/v2/auth?${params}` });
+    return res.end();
+  }
+
+  if (url.pathname === '/api/auth/google/callback' && req.method === 'GET') {
+    const code = url.searchParams.get('code');
+    const state = url.searchParams.get('state');
+    const issued = oauthStates.get(state || '');
+    oauthStates.delete(state || '');
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !issued || !code || Date.now() - issued > 600000) {
+      res.writeHead(302, { Location: '/?auth=1' });
+      return res.end();
+    }
+    try {
+      const tokRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id: GOOGLE_CLIENT_ID,
+          client_secret: GOOGLE_CLIENT_SECRET,
+          redirect_uri: oauthRedirectBase(req),
+          grant_type: 'authorization_code'
+        })
+      });
+      const tok = await tokRes.json();
+      if (!tok.access_token) {
+        res.writeHead(302, { Location: '/?auth=2' });
+        return res.end();
+      }
+      const uiRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: { Authorization: `Bearer ${tok.access_token}` }
+      });
+      const info = await uiRes.json();
+      if (!info.email) {
+        res.writeHead(302, { Location: '/?auth=3' });
+        return res.end();
+      }
+      const token = issueSession(
+        { email: info.email, name: info.name || info.email, picture: info.picture || '' },
+        'google'
+      );
+      setSessionCookie(res, token, true);
+      res.writeHead(302, { Location: '/?ok=1' });
+      return res.end();
+    } catch {
+      res.writeHead(302, { Location: '/?auth=4' });
+      return res.end();
+    }
+  }
+
+  if (url.pathname === '/api/session' && req.method === 'GET') {
+    const token = readCookies(req).cp_session;
+    const sess = token ? authSessions.get(token) : null;
+    if (!sess) return sendJSON(res, 200, { user: null });
+    return sendJSON(res, 200, {
+      user: { email: sess.email, name: sess.name, picture: sess.picture },
+      method: sess.method
+    });
+  }
+
+  if (url.pathname === '/api/logout' && (req.method === 'POST' || req.method === 'GET')) {
+    const token = readCookies(req).cp_session;
+    if (token) authSessions.delete(token);
+    clearSessionCookie(res);
+    return sendJSON(res, 200, { success: true });
   }
 
   if (url.pathname === '/api/login' && req.method === 'POST') {

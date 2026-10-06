@@ -51,49 +51,69 @@
   }
 
   // ── Auth ─────────────────────────────────────
-  window.login = async function () {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const btn = document.getElementById('login-btn');
+  window.googleSignIn = function () {
+    window.location.href = '/api/auth/google';
+  };
 
-    if (!email || !password) {
-      toast('Please enter email and password', 'error');
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'Signing in...';
-
+  window.demoLogin = async function () {
+    const btn = document.getElementById('google-btn');
+    if (btn) btn.disabled = true;
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email: 'student@cloudplay.local', password: 'cloudplay123' })
       });
-
       if (res.ok) {
-        const data = await res.json();
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('dashboard-screen').classList.remove('hidden');
-        toast(`Welcome back, ${data.user.email}`, 'success');
-        refreshDashboard();
-        refreshInterval = setInterval(refreshDashboard, 3000);
+        enterDashboard('student@cloudplay.local');
+        toast('DEMO MODE :: signed in as student@cloudplay.local', 'success', 5000);
       } else {
         const err = await res.json();
-        toast(err.error || 'Invalid credentials', 'error');
+        toast(err.error || 'demo sign in failed', 'error');
       }
     } catch {
       toast('Connection failed. Is the server running?', 'error');
     } finally {
-      btn.disabled = false;
-      btn.textContent = 'Sign In';
+      if (btn) btn.disabled = false;
     }
   };
+
+  function enterDashboard(email) {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('dashboard-screen').classList.remove('hidden');
+    const who = document.getElementById('whoami-user');
+    if (who) who.textContent = email;
+    refreshDashboard();
+    refreshInterval = setInterval(refreshDashboard, 3000);
+  }
+
+  async function bootstrapAuth() {
+    try {
+      const r = await fetch('/api/session');
+      const d = await r.json();
+      if (d && d.user) {
+        enterDashboard(d.user.email);
+        return;
+      }
+    } catch { /* fall through to config check */ }
+    try {
+      const c = await fetch('/api/auth/config');
+      const cfg = await c.json();
+      const demoRow = document.getElementById('demo-row');
+      const hint = document.getElementById('auth-hint');
+      if (demoRow && cfg.googleConfigured === false) {
+        demoRow.classList.remove('hidden');
+        if (hint) hint.textContent = '$ hint :: google oauth unconfigured here — demo mode active';
+      }
+    } catch { /* ignore */ }
+  }
 
   window.logout = function () {
     if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
     closeStream();
-    window.location.reload();
+    fetch('/api/logout', { method: 'POST' })
+      .catch(() => {})
+      .finally(() => window.location.reload());
   };
 
   // ── Dashboard ────────────────────────────────
@@ -1051,14 +1071,6 @@ keyHandlers = null;
     ctx.fillText(`GPU FURNACE :: ${s.particles.length.toLocaleString()} PARTICLES :: [CLICK] SHOCKWAVE`, 18, h - 18);
   }
 
-  // ── Handle Enter key on login ────────────────
-  document.getElementById('password').addEventListener('keydown', e => {
-    if (e.key === 'Enter') window.login();
-  });
-  document.getElementById('email').addEventListener('keydown', e => {
-    if (e.key === 'Enter') window.login();
-  });
-
   // ── Sysbar clock ─────────────────────────────
   function initClock() {
     const el = document.getElementById('sysbar-time');
@@ -1087,4 +1099,5 @@ keyHandlers = null;
 
   startTypewriter();
   initClock();
+  bootstrapAuth();
 })();
